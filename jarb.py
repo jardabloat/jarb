@@ -1,8 +1,14 @@
+import os
 import discord
+from dotenv import load_dotenv
 from discord.ext import commands
 intents = discord.Intents.default()
 intents.voice_states = True
 intents.message_content = True
+
+load_dotenv()
+
+TOKEN = os.getenv('DISCORD_TOKEN')
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
@@ -41,4 +47,4 @@ async def user_limit(ctx, number):
 
 
 
-bot.run('MTU0Njg3MDE0NTMyMDc0NzAyMA.GUqhC6.ooBFGKyHIVhEmfY3QmuQLJAEahy5MTtBjRqKUM')
+bot.run(TOKEN)

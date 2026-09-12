@@ -1,0 +1,4 @@
+.env
+DISCORD_TOKEN=MTU0Njg3MDE0NTMyMDc0NzAyMA.GUqhC6.ooBFGKyHIVhEmfY3QmuQLJAEahy5MTtBjRqKUM
+__pycache__/
+*.pyc
