@@ -1,5 +1,6 @@
 import os
 import discord
+import yt_dlp
 from dotenv import load_dotenv
 from discord.ext import commands
 intents = discord.Intents.default()
@@ -13,6 +14,15 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 
 GEN_CHANNEL = 1546869709624971284
 temp_channel = {}
+
+options_ytdl = {
+    'format': 'bestaudio/best',
+    'noplaylist': True,
+    'quiet': True,
+}
+queues = {}
+
+extractor = yt_dlp.YoutubeDL(options_ytdl)
 
 @bot.event
 async def on_voice_state_update(member, before, after):
@@ -44,6 +54,49 @@ async def user_limit(ctx, number):
         await ctx.author.voice.channel.edit(user_limit=int(number))
         await ctx.send(f"Limite d'utilisateur mise à jour à "+number)
 
+@bot.command()
+async def music(ctx, link):
+    if ctx.author.voice is not None and ctx.author.voice.channel is not None:
+        voice_channel = ctx.author.voice.channel
+        if ctx.voice_client is None:
+            await voice_channel.connect()
+        voice_client = ctx.voice_client
+
+        if ctx.guild.id not in queues:
+            queues[ctx.guild.id] = []
+
+        queues[ctx.guild.id].append(link)
+
+        if voice_client.is_playing():
+            pass
+        else:
+            play_next(ctx, ctx.guild.id, voice_client)
 
 
+
+def play_next(ctx, guild, voice_client):
+    if guild in queues and len(queues[guild]) > 0:
+        link = queues[guild].pop(0)
+        info = extractor.extract_info(link, download=False)
+        url = info['url']
+
+        voice_client.play(
+            discord.FFmpegPCMAudio(
+            url, 
+            executable="C:/FFmpeg/bin/ffmpeg.exe", 
+            before_options="-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5"
+        ), 
+        after=lambda erreur: play_next(ctx, guild, voice_client)
+)
+
+@bot.command()
+async def quit(ctx):
+    if ctx.voice_client is not None:
+        ctx.voice_client.stop()
+        await ctx.voice_client.disconnect()
+        if ctx.guild.id in queues:
+            del queues[ctx.guild.id]
+
+
+# .\.venv\Scripts\activate
 bot.run(TOKEN)
