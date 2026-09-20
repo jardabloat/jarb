@@ -1,4 +1,4 @@
 # just a random bot
 ## features
-- play youtube links in voice channels (with the command to quit that clean the dictionnary)
-- voice channel generator (not dynamic, if you need this, change the channel id in the code)
+- play youtube links in voice channels (!music to play the link and add to a queue, !quit to clean the queue and to disconnect the bot)
+- voice channel generator (setup with !channel)
