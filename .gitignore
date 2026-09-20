@@ -1,3 +1,4 @@
 .env
+gen_channels.json
 __pycache__/
 *.pyc
