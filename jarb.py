@@ -1,6 +1,7 @@
 import os
 import discord
 import yt_dlp
+import json
 from dotenv import load_dotenv
 from discord.ext import commands
 intents = discord.Intents.default()
@@ -12,21 +13,36 @@ TOKEN = os.getenv('DISCORD_TOKEN')
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-GEN_CHANNEL = 1546869709624971284
-temp_channel = {}
-
 options_ytdl = {
     'format': 'bestaudio/best',
     'noplaylist': True,
     'quiet': True,
 }
 queues = {}
+gen_channels = {}
+temp_channel = {}
+DATA_FILE = "gen_channels.json"
 
 extractor = yt_dlp.YoutubeDL(options_ytdl)
 
+def load_gen_channels():
+    try:
+        with open(DATA_FILE, "r") as f:
+            data = json.load(f)
+            return {int(k): int(v) for k, v in data.items()}
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+def save_gen_channels(data):
+    with open(DATA_FILE, "w") as f:
+        json.dump(data, f, indent=4)
+
+gen_channels = load_gen_channels()
+
 @bot.event
 async def on_voice_state_update(member, before, after):
-    if after.channel is not None and after.channel.id == GEN_CHANNEL:
+    gen_channel_id = gen_channels.get(member.guild.id)
+    if after.channel is not None and gen_channel_id is not None and after.channel.id == gen_channel_id:
         server = after.channel.guild
         cat = after.channel.category
 
@@ -53,6 +69,12 @@ async def user_limit(ctx, number):
     if ctx.author.voice is not None and ctx.author.voice.channel is not None and ctx.author.voice.channel in temp_channel and ctx.author == temp_channel[ctx.author.voice.channel]:
         await ctx.author.voice.channel.edit(user_limit=int(number))
         await ctx.send(f"Limite d'utilisateur mise à jour à "+number)
+
+@bot.command()
+async def channel(ctx, id):
+    gen_channels[ctx.guild.id] = id
+    save_gen_channels(gen_channels)
+    await ctx.send(f"Le salon générateur a été défini sur l'ID : {id}")
 
 @bot.command()
 async def music(ctx, link):
@@ -96,7 +118,6 @@ async def quit(ctx):
         await ctx.voice_client.disconnect()
         if ctx.guild.id in queues:
             del queues[ctx.guild.id]
-
 
 # .\.venv\Scripts\activate
 bot.run(TOKEN)
